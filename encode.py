@@ -4,6 +4,7 @@ import pickle
 import argparse
 import random
 import sys
+import typing
 
 
 parser = argparse.ArgumentParser()
@@ -18,7 +19,6 @@ parser.add_argument('--language', default='eng', type=str, help='Language of enc
 parser.add_argument('--random_file', default='NoFile', type=str, help='File with random string for Vernam')
 myNamespace = parser.parse_args()
 EnglishTextUrl = 'http://www.gutenberg.org/files/296/296-0.txt'
-utfEncoding = 'utf-16le'
 
 
 class TextAnalysis:
@@ -58,7 +58,7 @@ class TextAnalysis:
 
 class Vigenere:
 
-    LatinIndex = 0.0644
+    LatinIndex = 0.0644 # Constants for hacking
     RussianIndex = 0.0553
     UpperBoundFor = 100
     Epsilon = 0.01
@@ -79,6 +79,7 @@ class Vigenere:
         self.currentIndex = (self.currentIndex + 1) % self.lenOfWord
         return answerLetter
 
+    @staticmethod
     def getAntiWord(LanguageAlphabet, word):
         answerWord = ''
         Len = len(LanguageAlphabet)
@@ -89,6 +90,7 @@ class Vigenere:
 
         return answerWord
 
+    @staticmethod
     def countIndex(text, LanguageAlphabet):
         d = dict()
         for i in LanguageAlphabet:
@@ -104,6 +106,7 @@ class Vigenere:
 
         return Index
 
+    @staticmethod
     def giveShiftedAlphabet(LanguageAlphabet, shift):
         answer = ''
         for i in range(len(LanguageAlphabet)):
@@ -111,6 +114,7 @@ class Vigenere:
             answer += LanguageAlphabet[j]
         return answer
 
+    @staticmethod
     def doubleIndex(text1, text2, shift, LanguageAlphabet):
         AnotherAlphabet = Vigenere.giveShiftedAlphabet(LanguageAlphabet, shift)
         d1 = dict()
@@ -131,11 +135,13 @@ class Vigenere:
             MIndex += d1[letter1] * d2[letter2] / n1 / n2
         return MIndex
 
+    @staticmethod
     def gcd(a, b):
         if not b:
             return a
         return Vigenere.gcd(b, a % b)
 
+    @staticmethod
     def bigGcd(ListOfIntegers):
         if not ListOfIntegers:
             raise RuntimeError('Empty list for gcd')
@@ -165,8 +171,7 @@ def LettersInFile(fileName):
 
     return s
 
-
-def writeToFile(text):
+def writeToFile(text) -> None:
     if myNamespace.output_file == 'NoFile':
         sys.stdout.write(text)
     else:
@@ -183,7 +188,12 @@ def understandLanguage(text):
 
 
 def setStatistics():
-    UsingText = TextAnalysis(url=myNamespace.input_url, fileName=myNamespace.input_file)
+    if myNamespace.input_url != 'NoUrl':
+        Text = getTextFromUrl(myNamespace.input_url)
+    else:
+        Text = LettersInFile(myNamespace.input_file)
+
+    UsingText = TextAnalysis(Text)
     UsingText.countFrequency()
     UsingText.getWords()
     Data = (UsingText.countLetters, UsingText.setOfWords)
