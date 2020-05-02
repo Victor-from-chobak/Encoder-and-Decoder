@@ -18,14 +18,14 @@ parser.add_argument('--AnalyzedDataFile', default='NoFile', type=str, help='File
 parser.add_argument('--language', default='eng', type=str, help='Language of encoding')
 parser.add_argument('--random_file', default='NoFile', type=str, help='File with random string for Vernam')
 myNamespace = parser.parse_args()
-EnglishTextUrl = 'http://www.gutenberg.org/files/296/296-0.txt'
+ENGLISH_TEXT_URL = 'http://www.gutenberg.org/files/296/296-0.txt'
 
 
 class TextAnalysis:
 
-    LatinChars = string.ascii_letters + string.punctuation + string.digits + '\n' + ' ' + '”“’'
-    RussianAlphabet = 'абвгдеёжзийклмнопрстуфхцчшщьыъэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЬЫЪЭЮЯ'
-    RussianChars = RussianAlphabet + string.punctuation + string.digits + '\n' + ' ' + '”“’'
+    LATIN_CHARS = string.ascii_letters + string.punctuation + string.digits + '\n' + ' ' + '”“’'
+    RUSSIAN_ALPHABET = 'абвгдеёжзийклмнопрстуфхцчшщьыъэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЬЫЪЭЮЯ'
+    RUSSIAN_CHARS = RUSSIAN_ALPHABET + string.punctuation + string.digits + '\n' + ' ' + '”“’'
 
     def __init__(self, text):
         self.mainText = text
@@ -58,10 +58,10 @@ class TextAnalysis:
 
 class Vigenere:
 
-    LatinIndex = 0.0644 # Constants for hacking
-    RussianIndex = 0.0553
-    UpperBoundFor = 100
-    Epsilon = 0.01
+    LATIN_INDEX = 0.0644 # Constants for hacking
+    RUSSIAN_INDEX = 0.0553
+    RUSSIAN_BOUND_FOR = 100
+    EPSILON = 0.01
 
     def __init__(self, LanguageAlphabet, word):
         self.codeWord = word
@@ -181,10 +181,10 @@ def writeToFile(text) -> None:
 
 def understandLanguage(text):
     setText = set(text)
-    if len(setText & set(TextAnalysis.LatinChars)) > len(setText & set(TextAnalysis.RussianChars)):
-        return TextAnalysis.LatinChars
+    if len(setText & set(TextAnalysis.LATIN_CHARS)) > len(setText & set(TextAnalysis.RUSSIAN_CHARS)):
+        return TextAnalysis.LATIN_CHARS
     else:
-        return TextAnalysis.RussianChars
+        return TextAnalysis.RUSSIAN_CHARS
 
 
 def setStatistics():
@@ -214,7 +214,7 @@ def getStatistic():
     return data
 
 
-def vectorDistance(vectorData, vectorBad, shift, LanguageAlphabet=TextAnalysis.LatinChars):
+def vectorDistance(vectorData, vectorBad, shift, LanguageAlphabet=TextAnalysis.LATIN_CHARS):
     distance = 0
     for i in range(len(LanguageAlphabet)):
         j = (i + shift) % len(LanguageAlphabet)
@@ -243,7 +243,7 @@ def makeString(mapChar, text):
     return answerText
 
 
-def getMovedWords(Text, shift, LanguageAlphabet=TextAnalysis.LatinChars):
+def getMovedWords(Text, shift, LanguageAlphabet=TextAnalysis.LATIN_CHARS):
     newText = ''
     for char in Text:
         if char not in LanguageAlphabet:
@@ -255,7 +255,7 @@ def getMovedWords(Text, shift, LanguageAlphabet=TextAnalysis.LatinChars):
     return set(newText.split(' '))
 
 
-def HackCaesar(text, LanguageAlphabet=TextAnalysis.LatinChars):
+def HackCaesar(text, LanguageAlphabet=TextAnalysis.LATIN_CHARS):
     UsingText = TextAnalysis(text)
     UsingText.countFrequency()
     GivenData = getStatistic()
@@ -306,7 +306,7 @@ def HackVigenere(text, LanguageAlphabet):
                 Strings[i] += EncodedText[j]
                 j += t
             Indexes[i] = Vigenere.countIndex(Strings[i], LanguageAlphabet)
-            flag &= (abs(Indexes[i] - Vigenere.LatinIndex) < Vigenere.Epsilon)
+            flag &= (abs(Indexes[i] - Vigenere.LATIN_INDEX) < Vigenere.EPSILON)
         if flag:
             goodLen.append(t)
     keyLen = Vigenere.bigGcd(goodLen)
@@ -450,10 +450,10 @@ def Encoding():
         raise RuntimeError('No cipher was given')
 
     if myNamespace.language == 'eng':
-        LanguageAlphabet = TextAnalysis.LatinChars
+        LanguageAlphabet = TextAnalysis.LATIN_CHARS
 
     if myNamespace.language == 'rus':
-        LanguageAlphabet = TextAnalysis.RussianChars
+        LanguageAlphabet = TextAnalysis.RUSSIAN_CHARS
 
     if myNamespace.cipher == 'NoCipher':
         raise RuntimeError('Give a cipher')
@@ -482,10 +482,10 @@ def Decoding():
         raise RuntimeError('No cipher was given')
 
     if myNamespace.language == 'eng':
-        LanguageAlphabet = TextAnalysis.LatinChars
+        LanguageAlphabet = TextAnalysis.LATIN_CHARS
 
     elif myNamespace.language == 'rus':
-        LanguageAlphabet = TextAnalysis.RussianChars
+        LanguageAlphabet = TextAnalysis.RUSSIAN_CHARS
 
     if myNamespace.cipher == 'caesar':
         newShift = len(LanguageAlphabet) - int(myNamespace.key)
