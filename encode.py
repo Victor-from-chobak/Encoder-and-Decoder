@@ -1,185 +1,68 @@
 import requests
-import string
 import pickle
 import argparse
 import random
 import sys
 import typing
 
-
-parser = argparse.ArgumentParser()
-parser.add_argument('operating_mode', type=str, help='HowToOperate')
-parser.add_argument('--input_url', default='NoUrl', type=str, help='input url_for_text')
-parser.add_argument('--input_file', default='NoFile', type=str, help='input_file')
-parser.add_argument('--output_file', default='NoFile', type=str, help='output file')
-parser.add_argument('--cipher', default='NoCipher', type=str, help='Cipher for encoding')
-parser.add_argument('--key', default='NoKey', type=str, help='key for encoding')
-parser.add_argument('--AnalyzedDataFile', default='NoFile', type=str, help='File with frequency')
-parser.add_argument('--language', default='eng', type=str, help='Language of encoding')
-parser.add_argument('--random_file', default='NoFile', type=str, help='File with random string for Vernam')
-myNamespace = parser.parse_args()
-ENGLISH_TEXT_URL = 'http://www.gutenberg.org/files/296/296-0.txt'
+from TextAnalysis import TextAnalysis
+from VigenereClass import VigenereCipher
 
 
-class TextAnalysis:
-
-    LATIN_CHARS = string.ascii_letters + string.punctuation + string.digits + '\n' + ' ' + '”“’'
-    RUSSIAN_ALPHABET = 'абвгдеёжзийклмнопрстуфхцчшщьыъэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЬЫЪЭЮЯ'
-    RUSSIAN_CHARS = RUSSIAN_ALPHABET + string.punctuation + string.digits + '\n' + ' ' + '”“’'
-
-    def __init__(self, text):
-        self.mainText = text
-        self.countLetters = dict()
-        self.setOfWords = set()
-
-    def getWords(self):
-        self.setOfWords = set(self.mainText.split(' '))
-
-    def countFrequency(self):
-        for letter in self.mainText:
-            if letter not in self.countLetters:
-                self.countLetters[letter] = 0
-            self.countLetters[letter] += 1
-
-        Total = 0
-        for letter in self.countLetters.keys():
-            Total += self.countLetters[letter]
-
-        for letter in self.countLetters.keys():
-            self.countLetters[letter] /= Total
-
-    def outFrequencyLatin(self):
-        for letter in string.ascii_lowercase:
-            print(self.countLetters[letter])
-
-    def getSetOfWords(text):
-        return set(text.split(' '))
+def parsing():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('operating_mode', type=str, help='HowToOperate')
+    parser.add_argument('--input_url', default=None, type=str, help='full url starts with http://')
+    parser.add_argument('--input_file', default=None, type=str, help='text file in utf-8 in english/russian language')
+    parser.add_argument('--output_file', default=None, type=str, help='any file')
+    parser.add_argument('--cipher', default='NoCipher', type=str, help='Cipher for encoding')
+    parser.add_argument('--key', default='NoKey', type=str, help='key for encoding, number for caesar, string for vigenere')
+    parser.add_argument('--AnalyzedDataFile', default=None, type=str, help='File with frequency got from input file')
+    parser.add_argument('--language', default='eng', type=str, help='Language of encoding', choices=['eng', 'rus'])
+    parser.add_argument('--random_file', default=None, type=str, help='File with random string for Vernam')
+    myNamespace = parser.parse_args()
+    return myNamespace
 
 
-class Vigenere:
-
-    LATIN_INDEX = 0.0644 # Constants for hacking
-    RUSSIAN_INDEX = 0.0553
-    RUSSIAN_BOUND_FOR = 100
-    EPSILON = 0.01
-
-    def __init__(self, LanguageAlphabet, word):
-        self.codeWord = word
-        self.lenOfWord = len(word)
-        self.currentIndex = 0
-        self.Alphabet = LanguageAlphabet
-        self.Len = len(self.Alphabet)
-
-    def getLetter(self, char):
-        letter = self.codeWord[self.currentIndex]
-        indChar = self.Alphabet.find(char)
-        indLetter = self.Alphabet.find(letter)
-        newInd = (indChar + indLetter) % self.Len
-        answerLetter = self.Alphabet[newInd]
-        self.currentIndex = (self.currentIndex + 1) % self.lenOfWord
-        return answerLetter
-
-    @staticmethod
-    def getAntiWord(LanguageAlphabet, word):
-        answerWord = ''
-        Len = len(LanguageAlphabet)
-        for letter in word:
-            indLetter = LanguageAlphabet.find(letter)
-            newInd = (Len - indLetter) % Len
-            answerWord += LanguageAlphabet[newInd]
-
-        return answerWord
-
-    @staticmethod
-    def countIndex(text, LanguageAlphabet):
-        d = dict()
-        for i in LanguageAlphabet:
-            d[i] = 0
-        for i in text:
-            d[i] += 1
-        n = len(text)
-        if n == 1:
-            return 0
-        Index = 0
-        for i in d.keys():
-            Index += d[i] * (d[i] - 1) / n / (n - 1)
-
-        return Index
-
-    @staticmethod
-    def giveShiftedAlphabet(LanguageAlphabet, shift):
-        answer = ''
-        for i in range(len(LanguageAlphabet)):
-            j = (i + shift) % len(LanguageAlphabet)
-            answer += LanguageAlphabet[j]
-        return answer
-
-    @staticmethod
-    def doubleIndex(text1, text2, shift, LanguageAlphabet):
-        AnotherAlphabet = Vigenere.giveShiftedAlphabet(LanguageAlphabet, shift)
-        d1 = dict()
-        d2 = dict()
-        n1 = len(text1)
-        n2 = len(text2)
-        for i in LanguageAlphabet:
-            d1[i] = 0
-            d2[i] = 0
-        for j in text1:
-            d1[j] += 1
-        for j in text2:
-            d2[j] += 1
-        MIndex = 0
-        for i in range(len(LanguageAlphabet)):
-            letter1 = LanguageAlphabet[i]
-            letter2 = AnotherAlphabet[i]
-            MIndex += d1[letter1] * d2[letter2] / n1 / n2
-        return MIndex
-
-    @staticmethod
-    def gcd(a, b):
-        if not b:
-            return a
-        return Vigenere.gcd(b, a % b)
-
-    @staticmethod
-    def bigGcd(ListOfIntegers):
-        if not ListOfIntegers:
-            raise RuntimeError('Empty list for gcd')
-
-        answer = ListOfIntegers[0]
-        for i in range(len(ListOfIntegers) - 1):
-            answer = Vigenere.gcd(answer, ListOfIntegers[i + 1])
-        return answer
-
-    def encodeText(self, text):
-        answerText = ''
-        for j in text:
-            answerText += self.getLetter(j)
-        return answerText
-
-
-def getTextFromUrl(url):
+def get_text_from_url(url):
     return requests.get(url).text
 
 
-def LettersInFile(fileName):
-    if fileName != 'NoFile':
+def letters_in_file(fileName):
+    """[give text from file]
+
+    Arguments:
+        fileName {[str]} -- [name of file]
+
+    Returns:
+        [str] -- [text in file]
+    """
+    if fileName != None:
         with open(fileName, 'r') as file:
-            s = file.read()
+            currentString = file.read()
     else:
-        s = sys.stdin.read()
+        currentString = sys.stdin.read()
 
-    return s
+    return currentString
 
-def writeToFile(text) -> None:
-    if myNamespace.output_file == 'NoFile':
+
+def write_to_file(myNamespace, text):
+    if myNamespace.output_file == None:
         sys.stdout.write(text)
     else:
         with open(myNamespace.output_file, 'w') as file:
             file.write(text)
 
 
-def understandLanguage(text):
+def understand_language(text):
+    """[Function for hacking]
+
+    Arguments:
+        text {[str]} -- [encoded text]
+
+    Returns:
+        [str] -- [Alphabet of current language]
+    """
     setText = set(text)
     if len(setText & set(TextAnalysis.LATIN_CHARS)) > len(setText & set(TextAnalysis.RUSSIAN_CHARS)):
         return TextAnalysis.LATIN_CHARS
@@ -187,23 +70,27 @@ def understandLanguage(text):
         return TextAnalysis.RUSSIAN_CHARS
 
 
-def setStatistics():
-    if myNamespace.input_url != 'NoUrl':
-        Text = getTextFromUrl(myNamespace.input_url)
-    else:
-        Text = LettersInFile(myNamespace.input_file)
+def set_statistics(myNamespace):
+    """In operating mode READ set frequency of letters in output_file"""
 
-    UsingText = TextAnalysis(Text)
-    UsingText.countFrequency()
-    UsingText.getWords()
-    Data = (UsingText.countLetters, UsingText.setOfWords)
+    if myNamespace.input_url != None:
+        text = get_text_from_url(myNamespace.input_url)
+    else:
+        text = letters_in_file(myNamespace.input_file)
+
+    usingText = TextAnalysis(text)
+    usingText.countFrequency()
+    usingText.getWords()
+    data = (usingText.numberOfLetters, usingText.setOfWords)
 
     with open(myNamespace.output_file, 'wb') as file:
-        pickle.dump(Data, file)
+        pickle.dump(data, file)
 
 
-def getStatistic():
-    if myNamespace.AnalyzedDataFile == 'NoFile':
+def get_statistic(myNamespace):
+    """Give statistic for hack ciphers"""
+
+    if myNamespace.AnalyzedDataFile == None:
         raise RuntimeError('No file with frequency')
 
     data = dict()
@@ -214,26 +101,48 @@ def getStatistic():
     return data
 
 
-def vectorDistance(vectorData, vectorBad, shift, LanguageAlphabet=TextAnalysis.LATIN_CHARS):
-    distance = 0
-    for i in range(len(LanguageAlphabet)):
-        j = (i + shift) % len(LanguageAlphabet)
-        key = LanguageAlphabet[j]
-        if key not in vectorData:
-            a = 0
-        else:
-            a = vectorData[key]
-        if key not in vectorBad:
-            b = 0
-        else:
-            b = vectorBad[key]
+def vector_distance(vectorData, vectorBad, shift, languageAlphabet=TextAnalysis.LATIN_CHARS):
+    """[using in caesar to find minimal difference between vectors]
 
-        distance += (a - b) ** 2
+    Arguments:
+        vectorData {[dict]} -- [normal vector]
+        vectorBad {[dict]} -- [encoded vector]
+        shift {[int]} -- [shift in caesar]
+
+    Keyword Arguments:
+        languageAlphabet {[type]} -- [] (default: {TextAnalysis.LATIN_CHARS})
+
+    Returns:
+        [float] -- [distance between vectors]
+    """
+    distance = 0
+    for i in range(len(languageAlphabet)):
+        j = (i + shift) % len(languageAlphabet)
+        key = languageAlphabet[j]
+        if key not in vectorData:
+            firstCordinate = 0
+        else:
+            firstCordinate = vectorData[key]
+        if key not in vectorBad:
+            secondCordinate = 0
+        else:
+            secondCordinate = vectorBad[key]
+
+        distance += (firstCordinate - secondCordinate) ** 2
 
     return distance
 
 
-def makeString(mapChar, text):
+def make_string(mapChar, text):
+    """[encode/decode given text]
+
+    Arguments:
+        mapChar {[dict]} -- [description]
+        text {[str]} -- [description]
+
+    Returns:
+        [str] -- [encoded/decoded text]
+    """
     answerText = ''
     for char in text:
         if char not in mapChar:
@@ -243,106 +152,143 @@ def makeString(mapChar, text):
     return answerText
 
 
-def getMovedWords(Text, shift, LanguageAlphabet=TextAnalysis.LATIN_CHARS):
+def get_moved_words(text, shift, languageAlphabet=TextAnalysis.LATIN_CHARS):
+    """encoded/decoded words from caesar cipher"""
     newText = ''
-    for char in Text:
-        if char not in LanguageAlphabet:
+    for char in text:
+        if char not in languageAlphabet:
             newText += char
             continue
-        index = LanguageAlphabet.find(char)
-        newIndex = (index + shift) % len(LanguageAlphabet)
-        newText += LanguageAlphabet[newIndex]
+        index = languageAlphabet.find(char)
+        newIndex = (index + shift) % len(languageAlphabet)
+        newText += languageAlphabet[newIndex]
     return set(newText.split(' '))
 
 
-def HackCaesar(text, LanguageAlphabet=TextAnalysis.LATIN_CHARS):
-    UsingText = TextAnalysis(text)
-    UsingText.countFrequency()
-    GivenData = getStatistic()
-    NormalFrequency = GivenData[0]
-    GivenWords = GivenData[1]
+def hack_caesar_cipher(myNamespace, text, languageAlphabet=TextAnalysis.LATIN_CHARS):
+    """[main function to hack caesar]
+
+    Arguments:
+        text {[str]} -- [encoded text]
+
+    Keyword Arguments:
+        languageAlphabet {[str]} -- [current alphabet] (default: {TextAnalysis.LATIN_CHARS})
+
+    Returns:
+        [tuple] -- [pair of count of normal words and dict for decoding]
+    """
+    usingText = TextAnalysis(text)
+    usingText.countFrequency()
+    givenData = get_statistic(myNamespace)
+    normalFrequency = givenData[0]
+    givenWords = givenData[1]
 
     bestShift = 0
     bestDistance = 10**10
     bestCountWords = 0
-    LenLanguage = len(LanguageAlphabet)
+    lenLanguage = len(languageAlphabet)
 
-    for shift in range(LenLanguage):
-        d = vectorDistance(NormalFrequency, UsingText.countLetters, shift)
+    for shift in range(lenLanguage):
+        curDist = vector_distance(normalFrequency, usingText.numberOfLetters, shift)
 
-        setShift = getMovedWords(UsingText.mainText, shift, LanguageAlphabet=LanguageAlphabet)
-        shiftWords = len(setShift & GivenWords)
+        setShift = get_moved_words(usingText.mainText, shift, languageAlphabet=languageAlphabet)
+        shiftWords = len(setShift & givenWords)
 
-        if (shiftWords > bestCountWords) or (shiftWords == bestCountWords and d < bestDistance):
+        if (shiftWords > bestCountWords) or (shiftWords == bestCountWords and curDist < bestDistance):
             bestShift = shift
-            bestDistance = d
+            bestDistance = curDist
             bestCountWords = shiftWords
 
-    print(LenLanguage)
-    print(bestShift)
     mapEncoding = dict()
-    array = list(UsingText.countLetters.keys())
+    array = list(usingText.numberOfLetters.keys())
 
-    for i in range(LenLanguage):
-        j = (i + bestShift) % LenLanguage
-        mapEncoding[LanguageAlphabet[i]] = LanguageAlphabet[j]
+    for i in range(lenLanguage):
+        j = (i + bestShift) % lenLanguage
+        mapEncoding[languageAlphabet[i]] = languageAlphabet[j]
 
     return(bestCountWords, mapEncoding)
 
 
-def HackVigenere(text, LanguageAlphabet):
-    GivenData = getStatistic()
-    GivenWords = GivenData[1]
-    EncodedText = text
+def count_key_len_for_Vigenere(encodedText, languageAlphabet):
+    """[help hack_vigenere_cipher to calculate len of key]
+
+    Arguments:
+        encodedText {[str]} -- [given text]
+        languageAlphabet {[str]} -- [current alphabet]
+
+    Returns:
+        [int] -- [len of the key]
+    """
     goodLen = list()
-    N = len(EncodedText)
+    lenText = len(encodedText)
     for t in range(1, 100):
         Strings = [''] * t
         Indexes = [0] * t
         flag = True
         for i in range(t):
             j = i
-            while j < N:
-                Strings[i] += EncodedText[j]
+            while j < lenText:
+                Strings[i] += encodedText[j]
                 j += t
-            Indexes[i] = Vigenere.countIndex(Strings[i], LanguageAlphabet)
-            flag &= (abs(Indexes[i] - Vigenere.LATIN_INDEX) < Vigenere.EPSILON)
+            Indexes[i] = VigenereCipher.count_index(Strings[i], languageAlphabet)
+            flag &= (abs(Indexes[i] - VigenereCipher.LATIN_INDEX) < VigenereCipher.EPSILON)
         if flag:
             goodLen.append(t)
-    keyLen = Vigenere.bigGcd(goodLen)
-    Strings = [''] * keyLen
+    return VigenereCipher.big_gcd(goodLen)
+
+
+def hack_vigenere_cipher(myNamespace, text, languageAlphabet):
+    """[Main function for hack vigenere cipher]
+
+    Arguments:
+        text {[str]} -- [encoded text]
+        languageAlphabet {[str]} -- [current alphabet]
+
+    Returns:
+        [tuple] -- [pair of count of normal words and key of cipher]
+    """
+
+    givenData = get_statistic(myNamespace)
+    givenWords = givenData[1]
+    encodedText = text
+    lenText = len(encodedText)
+    try:
+        keyLen = count_key_len_for_Vigenere(encodedText, languageAlphabet)
+    except RuntimeError:
+        return (-1, 0)
+    strings = [''] * keyLen
     for i in range(keyLen):
         j = i
-        while j < N:
-            Strings[i] += EncodedText[j]
-            j += t
+        while j < lenText:
+            strings[i] += encodedText[j]
+            j += keyLen
 
-    MA = len(LanguageAlphabet)
+    lenLan = len(languageAlphabet)
     deltas = [0] * keyLen
     for i in range(keyLen - 1):
         maxInd = 0
         bestShift = 0
-        for s in range(MA):
-            ind = Vigenere.doubleIndex(Strings[i], Strings[i + 1], s, LanguageAlphabet)
+        for s in range(lenLan):
+            ind = VigenereCipher.get_index_overlap_two_strings(strings[i], strings[i + 1], s, languageAlphabet)
             if ind > maxInd:
                 maxInd = ind
                 bestShift = s
-        deltas[i] = (MA - bestShift) % MA
+        deltas[i] = (lenLan - bestShift) % lenLan
 
     bestKey = ''
     bestWords = 0
 
-    for i in range(MA):
-        tryKey = LanguageAlphabet[i]
+    for i in range(lenLan):
+        tryKey = languageAlphabet[i]
         curIndex = i
         for j in range(keyLen - 1):
-            curIndex = (curIndex + deltas[j]) % MA
-            tryKey += LanguageAlphabet[curIndex]
+            curIndex = (curIndex + deltas[j]) % lenLan
+            tryKey += languageAlphabet[curIndex]
 
-        Encoder = Vigenere(LanguageAlphabet, tryKey)
-        newText = Encoder.encodeText(EncodedText)
+        encoder = VigenereCipher(languageAlphabet, tryKey)
+        newText = encoder.encode_text(encodedText)
         newSet = TextAnalysis.getSetOfWords(newText)
-        crossSet = len(newSet & GivenWords)
+        crossSet = len(newSet & givenWords)
         if crossSet > bestWords:
             bestWords = crossSet
             bestKey = tryKey
@@ -350,163 +296,172 @@ def HackVigenere(text, LanguageAlphabet):
     return (bestWords, bestKey)
 
 
-def Hack():
-    text = LettersInFile(myNamespace.input_file)
+def Hack(myNamespace):
+    """This function try to hack text such as encoded as caesar and vigenere"""
+    text = letters_in_file(myNamespace.input_file)
     flag = True
-    LanguageAlphabet = understandLanguage(text)
+    languageAlphabet = understand_language(text)
     for char in text:
-        flag &= char in LanguageAlphabet
+        flag &= char in languageAlphabet
 
-    p1 = HackCaesar(text, LanguageAlphabet)
+    firstPair = hack_caesar_cipher(myNamespace, text, languageAlphabet)
     if flag:
-        p2 = HackVigenere(text, LanguageAlphabet)
+        secondPair = hack_vigenere_cipher(myNamespace, text, languageAlphabet)
     else:
-        p2 = (-1, 0)
+        secondPair = (-1, 0)
 
-    if p1[0] > p2[0]:
-        writeToFile(makeString(p1[1], text))
+    if firstPair[0] > secondPair[0]:
+        write_to_file(myNamespace, make_string(firstPair[1], text))
     else:
-        EncodingVigenere(p2[1], LanguageAlphabet, text)
+        encoding_vigenere(secondPair[1], languageAlphabet, text, myNamespace)
 
 
-def EncodingCaesar(shift, LanguageAlphabet, text):
-    Text = TextAnalysis(text)
+def encoding_caesar(shift, languageAlphabet, text, myNamespace):
     mapEncoding = dict()
-    LenLanguage = len(LanguageAlphabet)
+    LenLanguage = len(languageAlphabet)
     shift = ((shift % LenLanguage) + LenLanguage) % LenLanguage
 
     for i in range(LenLanguage):
         j = (i + shift) % LenLanguage
-        mapEncoding[LanguageAlphabet[i]] = LanguageAlphabet[j]
+        mapEncoding[languageAlphabet[i]] = languageAlphabet[j]
 
-    writeToFile(makeString(mapEncoding, text))
+    write_to_file(myNamespace, make_string(mapEncoding, text))
 
 
-def EncodingVigenere(word, LanguageAlphabet, text):
-    Encoder = Vigenere(LanguageAlphabet, word)
+def encoding_vigenere(word, languageAlphabet, text, myNamespace):
+    encoder = VigenereCipher(languageAlphabet, word)
     answerText = ''
     for char in text:
-        if char not in LanguageAlphabet:
+        if char not in languageAlphabet:
             answerText += char
             continue
-        answerText += Encoder.getLetter(char)
-    writeToFile(answerText)
+        answerText += encoder.get_letter(char)
+    write_to_file(myNamespace, answerText)
 
 
-def setVernamKey(LanguageAlphabet, Len):
+def set_vernam_key(languageAlphabet, Len, myNamespace):
+    """make string for vernam cipher"""
+
     answerStr = ''
     random.seed()
     with open(myNamespace.random_file, 'w') as file:
         for i in range(Len):
-            randomNum = random.randint(0, len(LanguageAlphabet) - 1)
-            letter = LanguageAlphabet[randomNum]
+            randomNum = random.randint(0, len(languageAlphabet) - 1)
+            letter = languageAlphabet[randomNum]
             file.write(letter)
             answerStr += letter
 
     return answerStr
 
 
-def VernamMakeOutFile(text):
-    KeyString = LettersInFile(myNamespace.random_file)
+def vernam_make_out_file(text, myNamespace):
+    keyString = letters_in_file(myNamespace.random_file)
 
     with open(myNamespace.output_file, 'wb') as file:
-        x = [ord(text[i]) ^ ord(KeyString[i]) for i in range(len(text))]
-        pickle.dump(x, file)
+        tempList = [ord(text[i]) ^ ord(keyString[i]) for i in range(len(text))]
+        pickle.dump(tempList, file)
 
 
-def EncodingVernam(LanguageAlphabet, text):
-    if myNamespace.random_file == 'NoFile':
+def encoding_vernam(languageAlphabet, text, myNamespace):
+    if myNamespace.random_file == None:
         raise RuntimeError('No file for random string')
 
     cnt = len(text) * 2
-    setVernamKey(LanguageAlphabet, cnt)
-    VernamMakeOutFile()
+    set_vernam_key(languageAlphabet, cnt, myNamespace)
+    vernam_make_out_file(text, myNamespace)
 
 
-def DecodingVernam():
-    if myNamespace.random_file == 'NoFile':
+def decoding_vernam(myNamespace):
+    if myNamespace.random_file == None:
         raise RuntimeError('No file for random string')
 
-    KeyString = LettersInFile(myNamespace.random_file)
+    KeyString = letters_in_file(myNamespace.random_file)
 
     with open(myNamespace.input_file, 'rb') as file:
-        ar = pickle.load(file)
+        array = pickle.load(file)
 
     answerString = ''
-    for i in range(len(ar)):
-        letter = chr(ar[i] ^ ord(KeyString[i]))
+    for i in range(len(array)):
+        letter = chr(array[i] ^ ord(KeyString[i]))
         answerString += letter
 
-    writeToFile(answerString)
+    write_to_file(myNamespace, answerString)
 
 
-def Encoding():
-    if myNamespace.input_url != 'NoUrl':
-        Text = getTextFromUrl(url)
+def Encoding(myNamespace):
+    """This function handle work of encoding"""
+
+    if myNamespace.input_url != None:
+        text = get_text_from_url(url)
     else:
-        Text = LettersInFile(myNamespace.input_file)
+        text = letters_in_file(myNamespace.input_file)
 
     if myNamespace.cipher == 'NoCipher':
         raise RuntimeError('No cipher was given')
 
     if myNamespace.language == 'eng':
-        LanguageAlphabet = TextAnalysis.LATIN_CHARS
+        languageAlphabet = TextAnalysis.LATIN_CHARS
 
     if myNamespace.language == 'rus':
-        LanguageAlphabet = TextAnalysis.RUSSIAN_CHARS
+        languageAlphabet = TextAnalysis.RUSSIAN_CHARS
 
     if myNamespace.cipher == 'NoCipher':
         raise RuntimeError('Give a cipher')
 
     if myNamespace.cipher == 'caesar':
-        EncodingCaesar(LanguageAlphabet=LanguageAlphabet, shift=int(myNamespace.key), text=Text)
+        encoding_caesar(languageAlphabet=languageAlphabet, shift=int(myNamespace.key), text=text, myNamespace=myNamespace)
 
     elif myNamespace.cipher == 'vigenere':
-        EncodingVigenere(word=myNamespace.key, LanguageAlphabet=LanguageAlphabet, text=Text)
+        encoding_vigenere(word=myNamespace.key, languageAlphabet=languageAlphabet, text=text, myNamespace=myNamespace)
 
     elif myNamespace.cipher == 'vernam':
-        EncodingVernam(LanguageAlphabet=LanguageAlphabet, text=Text)
+        encoding_vernam(languageAlphabet=languageAlphabet, text=text, myNamespace=myNamespace)
 
 
-def Decoding():
+def Decoding(myNamespace):
+    """This function handle work of decoding"""
 
     if myNamespace.cipher == 'vernam':
-        DecodingVernam()
+        decoding_vernam(myNamespace)
+        return 0
 
-    if myNamespace.input_url != 'NoUrl':
-        Text = getTextFromUrl(url)
+    if myNamespace.input_url != None:
+        text = get_text_from_url(url)
     else:
-        Text = LettersInFile(myNamespace.input_file)
+        text = letters_in_file(myNamespace.input_file)
 
     if myNamespace.cipher == 'NoCipher':
         raise RuntimeError('No cipher was given')
 
     if myNamespace.language == 'eng':
-        LanguageAlphabet = TextAnalysis.LATIN_CHARS
+        languageAlphabet = TextAnalysis.LATIN_CHARS
 
     elif myNamespace.language == 'rus':
-        LanguageAlphabet = TextAnalysis.RUSSIAN_CHARS
+        languageAlphabet = TextAnalysis.RUSSIAN_CHARS
 
     if myNamespace.cipher == 'caesar':
-        newShift = len(LanguageAlphabet) - int(myNamespace.key)
-        EncodingCaesar(LanguageAlphabet=LanguageAlphabet, shift=newShift, text=Text)
+        newShift = len(languageAlphabet) - int(myNamespace.key)
+        encoding_caesar(languageAlphabet=languageAlphabet, shift=newShift, text=text, myNamespace=myNamespace)
 
     elif myNamespace.cipher == 'vigenere':
-        newWord = Vigenere.getAntiWord(word=myNamespace.key, LanguageAlphabet=LanguageAlphabet)
-        EncodingVigenere(word=newWord, LanguageAlphabet=LanguageAlphabet, text=Text)
+        newWord = VigenereCipher.get_anti_word(word=myNamespace.key, languageAlphabet=languageAlphabet)
+        encoding_vigenere(word=newWord, languageAlphabet=languageAlphabet, text=text, myNamespace=myNamespace)
 
 
 def main():
+    myNamespace = parsing()
+
     if myNamespace.operating_mode == 'read':
-        setStatistics()
+        set_statistics(myNamespace)
     elif myNamespace.operating_mode == 'hack':
-        Hack()
+        Hack(myNamespace)
     elif myNamespace.operating_mode == 'encode':
-        Encoding()
+        Encoding(myNamespace)
     elif myNamespace.operating_mode == 'decode':
-        Decoding()
+        Decoding(myNamespace)
     else:
         raise RuntimeError('Incorrect input')
 
 
-main()
+if __name__ == '__main__':
+    main()
