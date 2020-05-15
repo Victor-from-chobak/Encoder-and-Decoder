@@ -81,22 +81,22 @@ class VigenereCipher:
             [float] -- [needed index]
         """
         anotherAlphabet = VigenereCipher.give_shifted_alphabet(languageAlphabet, shift)
-        d1 = dict()
-        d2 = dict()
-        n1 = len(text1)
-        n2 = len(text2)
+        firstDict = dict()
+        secondDict = dict()
+        num1 = len(text1)
+        num2 = len(text2)
         for i in languageAlphabet:
-            d1[i] = 0
-            d2[i] = 0
+            firstDict[i] = 0
+            secondDict[i] = 0
         for j in text1:
-            d1[j] += 1
+            firstDict[j] += 1
         for j in text2:
-            d2[j] += 1
+            secondDict[j] += 1
         mIndex = 0
         for i in range(len(languageAlphabet)):
             letter1 = languageAlphabet[i]
             letter2 = anotherAlphabet[i]
-            mIndex += d1[letter1] * d2[letter2] / n1 / n2
+            mIndex += firstDict[letter1] * secondDict[letter2] / num1 / num2
         return mIndex
 
     @staticmethod
