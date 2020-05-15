@@ -4,7 +4,7 @@ You can use such command
 
 **python3 encode.py read --input_file=read.in --output_file.data.in**
 
-You can use my data file for **hack**
+You can use my big file(data.txt) to make file (data.in) for **hack**
 
 
 # Caesar examples
@@ -85,8 +85,6 @@ we will get the same text
 # Vernam examples
 For this encoding you need file for **key text(--random_file)** 
 and file **output file** for encoded text dumped with **pickle** 
-
-You can use my files, and use such comands
 
 **python3 encode.py encode --cipher=vernam --random_file=rand.in --input_file=f.in --output_file=f.out**
 
