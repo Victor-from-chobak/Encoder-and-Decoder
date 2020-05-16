@@ -5,6 +5,8 @@ import random
 import sys
 import typing
 
+sys.path.append('src')
+
 from TextAnalysis import TextAnalysis
 from VigenereClass import VigenereCipher
 
