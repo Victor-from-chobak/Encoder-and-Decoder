@@ -1,3 +1,8 @@
+# Note
+
+**Very important to choose language - to encode/decode russian text add --language=rus**
+
+
 # Read examples
 
 You can use such command
@@ -30,6 +35,26 @@ we will see how it will change 123
 This is simple text
 
 we will see how it will change 123
+
+
+### russian example 
+
+Это простой текст,
+
+Его не сложно зашивровать
+
+**python3 encode.py encode --cipher=caesar --key=10 --language=rus**
+
+(ъшещьшыъшуеъофыъ@дОмшечоеыхшрчшесйВтльшлйъД
+
+**python3 encode.py decode --cipher=caesar --key=10 --language=rus**
+
+
+Это простой текст,
+
+Его не сложно зашивровать
+
+
 
 # Vigenere examples
 Let's try something harder:
@@ -80,6 +105,23 @@ and put the motion, which was unanimously carried.
 **python3 hack python3 main.py hack --AnalyzedDataFile=data.in**
 
 we will get the same text
+
+**Russian examples**
+
+Текст побольше из русских букв
+
+Попробуем его зашивровать
+
+ла-ла-ла русский Текст,
+
+побольше!. знаков! препинания, смотрим
+
+Последнее предложение!
+
+**python3 encode.py encode --cipher=vigenere --key=слово --language=rus**
+
+%рщуБмыэгээЁЖжйьуйтВГэщкДммВмрлЫэсяАмВжымрсрйщлЖкрВьрвБЛёьв`эл`номъВуАъфш“"ццАф_лыэгээЁЖж:~жцпоъьр#йБъусчялъкН|жАоэДъчои"ьАнухщужйБъуёьАтупчц-
+
 
 
 # Vernam examples
