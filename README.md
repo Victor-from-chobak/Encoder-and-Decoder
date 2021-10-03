@@ -21,6 +21,6 @@ You can specify the parameters: **- cipher** - ciphers of caesar, vigenere, vern
 See the examples file for examples of results.
 
 
-#Notes
-If you do not specify a file for input and output, everything will be done via ** sys.stdin / sys.stdout **. The file encrypted with the Vigenère cipher will be compressed using **pickle**, the data used for cracking is also compressed (** read ** mode)
+# Notes
+If you do not specify a file for input and output, everything will be done via **sys.stdin / sys.stdout**. The file encrypted with the Vigenère cipher will be compressed using **pickle**, the data used for cracking is also compressed (**read** mode)
 All constants were taken from Wikipedia as recommended for normal texts (in English / Russian)
